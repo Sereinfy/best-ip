@@ -22,7 +22,7 @@ jobs:
     - name: Run script
       run: |
         if [! -d "CloudflareST" ]; then
-            mkdir CloudflareST
+          mkdir CloudflareST
         fi
       
         cd CloudflareST
