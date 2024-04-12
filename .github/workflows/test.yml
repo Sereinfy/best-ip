@@ -22,7 +22,10 @@ jobs:
     - name: Run script
       run: |
         chmod +x test.sh
-        sh test.sh
+        wget -N https://github.com/XIU2/CloudflareSpeedTest/releases/download/v2.2.5/CloudflareST_linux_amd64.tar.gz
+        tar -zxf CloudflareST_linux_amd64.tar.gz
+        chmod +x CloudflareST
+        ./CloudflareST
         
     - name: Commit and push changes
       run: |
