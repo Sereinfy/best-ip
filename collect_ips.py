@@ -17,7 +17,7 @@ if os.path.exists('front.txt'):
     os.remove('front.txt')
     
 # 创建一个文件来存储IP地址
-with open('ip.txt', 'w') as file:
+with open('front.txt', 'w') as file:
     for url in urls:
         # 发送HTTP请求获取网页内容
         response = requests.get(url)
@@ -40,10 +40,10 @@ with open('ip.txt', 'w') as file:
             for ip in ip_matches:
                 file.write(ip + '\n')
 
-print('IP地址已保存到ip.txt文件中。')
+print('IP地址已保存到front.txt文件中。')
 
 # 创建一个文件来存储IP地址
-with open('front.txt', 'w') as file:
+with open('ip.txt', 'w') as file:
     for url in urls2:
         # 发送HTTP请求获取网页内容
         response = requests.get(url)
@@ -66,4 +66,4 @@ with open('front.txt', 'w') as file:
             for ip in ip_matches:
                 file.write(ip + '\n')
 
-print('IP地址已保存到front.txt文件中。')
+print('IP地址已保存到ip.txt文件中。')
