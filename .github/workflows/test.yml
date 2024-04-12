@@ -14,7 +14,6 @@ jobs:
       - name: Update Rules
         continue-on-error: true
         run: |
-          bash ./data/script/update-rules.sh
           ./CloudflareST -dn 20 -dt 8 -p 0 -url https://cfspeed1.kkiyomi.top/300mb.bin -o ip.csv
         
 
