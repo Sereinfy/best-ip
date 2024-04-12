@@ -1,0 +1,38 @@
+name: Update IP List
+
+on:
+  schedule:
+    #- cron: '0 */4 * * *' # 每3小时运行一次
+  workflow_dispatch: # 允许手动触发
+
+jobs:
+
+  update-ip-list:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+        
+    - name: Run script
+      run: |
+        chmod +x test.sh
+        sh test.sh
+        
+    - name: Commit and push changes
+      run: |
+        git config --global user.email "tianshideyou@proton.me"
+        git config --global user.name "tianshipapa"
+        if [ -n "$(git status --porcelain)" ]; then
+          git add ip.txt
+          git add front.txt
+          git commit -m "Automatic update"
+          git push
+        else
+          echo "No changes detected, skipping commit."
+        fi
