@@ -1,0 +1,38 @@
+name: test
+on: 
+
+  workflow_dispatch:
+  schedule:
+    - cron: 0 17 * * *
+    
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+          
+      - name: Update Rules
+        continue-on-error: true
+        run: |
+          bash ./data/script/update-rules.sh
+          ./CloudflareST -dn 20 -dt 8 -p 0 -url https://cfspeed1.kkiyomi.top/300mb.bin -o ip.csv
+        
+
+          
+      - name: Git push assets to Github
+        run: |
+          git init
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git branch -m main
+          git add --all
+          git commit -m "Updated at $(TZ=UTC-8 date +'%Y-%m-%d %H:%M:%S')" -a
+          git push -f -u origin main
+
+      - name: Delete workflow runs 
+        uses: Mattraks/delete-workflow-runs@main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          retain_days: 0
+          keep_minimum_runs: 1
