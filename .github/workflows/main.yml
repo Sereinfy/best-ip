@@ -33,6 +33,7 @@ jobs:
         git config --global user.name "tianshipapa"
         if [ -n "$(git status --porcelain)" ]; then
           git add ip.txt
+          git add front.txt
           git commit -m "Automatic update"
           git push
         else
