@@ -15,7 +15,7 @@ jobs:
         continue-on-error: true
         run: |
           chmod +x CloudflareST
-          ./CloudflareST -dn 20 -dt 8 -p 0 -url https://cfspeed1.kkiyomi.top/300mb.bin -o ip.csv
+          ./CloudflareST -dn 20 -dt 8 -p 0 -o ip.csv
         
 
           
