@@ -6,7 +6,7 @@ import os
 # 目标URL列表
 urls = [
     'https://www.wetest.vip/page/cloudflare/address_v4.html',
-    'https://ip.164746.xyz'
+    'https://ip.164746.xyz',
     'https://api.uouin.com/cloudflare.html',
     'https://ipdb.030101.xyz/bestcf/'
 ]
