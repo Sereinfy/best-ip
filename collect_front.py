@@ -5,7 +5,9 @@ import os
 
 # 目标URL列表
 urls = [
-    'https://www.wetest.vip/page/cloudfront/ipv4.html'
+    'https://www.wetest.vip/page/cloudfront/ipv4.html',
+    'https://api.uouin.com/cloudflare.html',
+    'https://ipdb.030101.xyz/bestcf/'
 ]
 
 # 自定义正则表达式用于智能匹配IP地址
