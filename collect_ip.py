@@ -5,8 +5,7 @@ import os
 
 # 目标URL列表
 urls = [
-    'https://monitor.gacjie.cn/page/cloudflare/ipv4.html', 
-    'https://cfno1.pages.dev/pure',
+    'https://www.wetest.vip/page/cloudflare/address_v4.html', 
     'https://stock.hostmonit.com/CloudFlareYes'
 ]
 
