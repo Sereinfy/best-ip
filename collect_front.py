@@ -9,43 +9,45 @@ urls = [
 
 ]
 
-# 自定义正则表达式用于智能匹配IP地址
-ip_pattern = r'(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'
+# 正则表达式用于匹配IP地址
+ip_pattern = r'\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b'
 
-# 检查front.txt文件是否存在，如果存在则删除它
+# 检查ip.txt文件是否存在，如果存在则删除它
 if os.path.exists('front.txt'):
     os.remove('front.txt')
-
-# 创建一个集合来存储IP地址，避免重复
-unique_ips = set()
-
-# 初始化一个Session对象
-session = requests.Session()
-# 设置请求头，模拟浏览器访问
-session.headers.update({
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
-})
 
 # 创建一个文件来存储IP地址
 with open('front.txt', 'w') as file:
     for url in urls:
         try:
-            # 使用Session对象发送HTTP请求获取网页内容
-            response = session.get(url, timeout=10)  # 设置超时参数
+            # 发送HTTP请求获取网页内容
+            response = requests.get(url, timeout=10)
+            # 检查响应状态码是否为200
+            if response.status_code != 200:
+                print(f"无法访问 {url}，状态码: {response.status_code}")
+                continue
+            
+            # 使用BeautifulSoup解析HTML
             soup = BeautifulSoup(response.text, 'html.parser')
+            
+            # 找到所有<tr>元素
+            elements = soup.find_all('tr')
+            
+            # 遍历所有<tr>元素
+            for element in elements:
+                # 查找该<tr>中的所有<td>元素
+                tds = element.find_all('td')
+                contains_mobile = any("联通" in td.get_text() for td in tds)
 
-            # 提取纯文本内容
-            text = soup.get_text()
-
-            # 查找页面中的IP地址
-            ip_matches = re.findall(ip_pattern, text)
-
-            # 遍历所有匹配的IP地址
-            for ip in ip_matches:
-                if ip not in unique_ips:
-                    unique_ips.add(ip)
-                    file.write(ip + '\n')
-        except requests.RequestException as e:
-            print(f"请求{url}时出错: {e}")
+                # 如果<td>中包含“移动”，则查找IP地址
+                if contains_mobile:
+                    element_text = element.get_text()
+                    ip_matches = re.findall(ip_pattern, element_text)
+                    
+                    # 如果找到IP地址，则写入文件
+                    for ip in ip_matches:
+                        file.write(ip + '\n')
+        except requests.exceptions.RequestException as e:
+            print(f"访问 {url} 时出错: {e}")
 
 print('IP地址已保存到front.txt文件中。')
