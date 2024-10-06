@@ -37,7 +37,7 @@ with open('front.txt', 'w') as file:
             for element in elements:
                 # 查找该<tr>中的所有<td>元素
                 tds = element.find_all('td')
-                contains_mobile = any("联通" in td.get_text() for td in tds)
+                contains_mobile = any("移动" in td.get_text() for td in tds)
 
                 # 如果<td>中包含“移动”，则查找IP地址
                 if contains_mobile:
