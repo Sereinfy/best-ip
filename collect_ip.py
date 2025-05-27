@@ -8,7 +8,7 @@ urls = [
     'https://www.wetest.vip/page/cloudflare/address_v4.html',
     'https://ip.164746.xyz',
     'https://api.uouin.com/cloudflare.html',
-    'https://ipdb.030101.xyz/bestcf/'
+    'https://ipdb.030101.xyz/bestcfv4/'
 ]
 
 # 正则表达式用于匹配IP地址
