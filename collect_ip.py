@@ -1,49 +1,74 @@
 import requests
 from bs4 import BeautifulSoup
 import re
-import os
+
+# 用户代理头，模拟浏览器
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+}
 
 # 目标URL列表
 urls = [
-    'https://www.wetest.vip/page/cloudflare/address_v4.html'
+    'https://www.wetest.vip/page/cloudflare/address_v4.html',
+    'https://ip.164746.xyz',
+    'https://api.uouin.com/cloudflare.html',
+    'https://ipdb.030101.xyz/bestcfv4/'
 ]
 
-# 正则表达式用于匹配IP地址
-ip_pattern = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
+# 存储所有找到的IP地址
+all_ips = []
 
-# 检查ip.txt文件是否存在，不存在则创建
-if not os.path.exists('ip.txt'):
-    open('ip.txt', 'w').close()  # 创建空文件
-else:
-    # 如果存在则清空内容
-    open('ip.txt', 'w').close()
+def extract_ips_from_tr(soup):
+    """从<tr>标签中提取IP地址"""
+    ips = []
+    for tr in soup.find_all('tr'):
+        text = tr.get_text()
+        # 提取IP地址
+        ip_matches = re.findall(r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b', text)
+        if ip_matches:
+            ips.extend(ip_matches)
+    return ips
 
-# 创建一个文件来存储IP地址
-with open('ip.txt', 'a') as file:  # 使用追加模式写入
-    for url in urls:
-        try:
-            # 发送HTTP请求获取网页内容
-            response = requests.get(url, timeout=10)
-            # 检查响应状态码是否为200
-            if response.status_code != 200:
-                print(f"无法访问 {url}，状态码: {response.status_code}")
-                continue
+def scrape_url(url):
+    """爬取单个URL并提取IP地址"""
+    try:
+        print(f"正在爬取: {url}")
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()  # 检查请求是否成功
+        
+        # 使用BeautifulSoup解析HTML
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        # 方法1：优先从<tr>标签中提取
+        ips = extract_ips_from_tr(soup)
+        
+        # 方法2：如果没找到，再从整个页面文本中提取（备用方法）
+        if not ips:
+            print("从<tr>标签中未找到IP，尝试从整个页面提取...")
+            text = soup.get_text()
+            ips = re.findall(r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b', text)
+        
+        if not ips:
+            print(f"警告: 从 {url} 中未找到IP地址")
+        else:
+            print(f"从 {url} 中找到 {len(ips)} 个IP地址")
+            all_ips.extend(ips)
             
-            # 使用BeautifulSoup解析HTML
-            soup = BeautifulSoup(response.text, 'html.parser')
-            
-            # 找到所有<tr>元素
-            elements = soup.find_all('tr')
-            
-            # 遍历所有<tr>元素
-            for element in elements:
-                element_text = element.get_text()
-                ip_matches = re.findall(ip_pattern, element_text)
-                
-                # 如果找到IP地址，则写入文件
-                for ip in ip_matches:
-                    文件。write(ip + '\n')
-        except requests.exceptions.RequestException as e:
-            print(f"访问 {url} 时出错: {e}")
+    except requests.exceptions.RequestException as e:
+        print(f"错误: 爬取 {url} 失败 - {str(e)}")
+    except Exception as e:
+        print(f"错误: 处理 {url} 时发生意外错误 - {str(e)}")
 
-print('IP地址已保存到ip.txt文件中。')
+# 遍历所有URL进行爬取
+for url in urls:
+    scrape_url(url)
+
+# 去重
+unique_ips = list(set(all_ips))
+
+# 保存到文件
+with open('ip.txt', 'w') as f:
+    for ip in unique_ips:
+        f.write(ip + '\n')
+
+print(f"\n完成! 共找到 {len(unique_ips)} 个唯一IP地址，已保存到 ip.txt")
