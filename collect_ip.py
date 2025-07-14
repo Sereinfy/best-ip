@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import re
+import time  # 添加这行导入
 
 # 配置部分
 HEADERS = {
