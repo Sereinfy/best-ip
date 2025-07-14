@@ -12,19 +12,23 @@ urls = [
     'https://www.wetest.vip/page/cloudflare/address_v4.html',
     'https://ip.164746.xyz',
     'https://api.uouin.com/cloudflare.html',
-    'https://ipdb.030101.xyz/bestcfv4/'
+    'https://ipdb.030101.xyz/bestcfv4/'  # 修正后的URL
 ]
 
 # 存储所有找到的IP地址
 all_ips = []
+
+def extract_ips(text):
+    """从文本中提取IPv4地址"""
+    ip_pattern = r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b'
+    return re.findall(ip_pattern, text)
 
 def extract_ips_from_tr(soup):
     """从<tr>标签中提取IP地址"""
     ips = []
     for tr in soup.find_all('tr'):
         text = tr.get_text()
-        # 提取IP地址
-        ip_matches = re.findall(r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b', text)
+        ip_matches = extract_ips(text)
         if ip_matches:
             ips.extend(ip_matches)
     return ips
@@ -32,32 +36,27 @@ def extract_ips_from_tr(soup):
 def scrape_url(url):
     """爬取单个URL并提取IP地址"""
     try:
-        print(f"正在爬取: {url}")
+        print(f"\n正在爬取: {url}")
         response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()  # 检查请求是否成功
         
-        # 使用BeautifulSoup解析HTML
         soup = BeautifulSoup(response.text, 'html.parser')
-        
-        # 方法1：优先从<tr>标签中提取
         ips = extract_ips_from_tr(soup)
-        
-        # 方法2：如果没找到，再从整个页面文本中提取（备用方法）
-        if not ips:
-            print("从<tr>标签中未找到IP，尝试从整个页面提取...")
-            text = soup.get_text()
-            ips = re.findall(r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b', text)
+        if not ips:  # 如果<tr>里没有，再从整个页面提取
+            ips = extract_ips(response.text)
         
         if not ips:
-            print(f"警告: 从 {url} 中未找到IP地址")
+            print(f"⚠️ 警告: 从 {url} 中未找到IP地址")
         else:
-            print(f"从 {url} 中找到 {len(ips)} 个IP地址")
+            print(f"✅ 找到 {len(ips)} 个IP:")
+            for ip in ips:
+                print(f"  - {ip}")
             all_ips.extend(ips)
             
     except requests.exceptions.RequestException as e:
-        print(f"错误: 爬取 {url} 失败 - {str(e)}")
+        print(f"❌ 错误: 爬取 {url} 失败 - {str(e)}")
     except Exception as e:
-        print(f"错误: 处理 {url} 时发生意外错误 - {str(e)}")
+        print(f"❌ 错误: 处理 {url} 时发生意外错误 - {str(e)}")
 
 # 遍历所有URL进行爬取
 for url in urls:
@@ -71,4 +70,4 @@ with open('ip.txt', 'w') as f:
     for ip in unique_ips:
         f.write(ip + '\n')
 
-print(f"\n完成! 共找到 {len(unique_ips)} 个唯一IP地址，已保存到 ip.txt")
+print(f"\n✅ 完成! 共找到 {len(unique_ips)} 个唯一IP地址，已保存到 ip.txt")
