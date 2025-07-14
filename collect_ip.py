@@ -1,80 +1,111 @@
 import requests
 from bs4 import BeautifulSoup
 import re
-import time
+from urllib.parse import urlparse
 
-# 配置部分
-HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+# 用户代理头，模拟浏览器
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
 }
 
-# 主要目标网址（结果保存到ip.txt）
-MAIN_TARGETS = [
+# Cloudflare 相关URL
+CLOUDFLARE_URLS = [
     'https://www.wetest.vip/page/cloudflare/address_v4.html',
-    'https://ip.164746.xyz',
-    'https://api.uouin.com/cloudflare.html'
+    'https://ip.164746.xyz'
 ]
 
-# 特殊目标网址（结果单独保存到front.txt）
-SPECIAL_TARGET = 'https://www.wetest.vip/page/cloudfront/ipv4.html'
+# CloudFront 相关URL
+CLOUDFRONT_URL = 'https://www.wetest.vip/page/cloudfront/ipv4.html'
 
 def extract_ips(text):
-    """使用正则提取所有IPv4地址"""
-    return re.findall(r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b', text)
+    """从文本中提取IPv4地址"""
+    ip_pattern = r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b'
+    return re.findall(ip_pattern, text)
 
-def scrape_site(url, delay_seconds=10):
-    """核心爬取逻辑"""
+def extract_ips_from_tr(soup):
+    """从<tr>标签中提取IP地址"""
+    ips = []
+    for tr in soup.find_all('tr'):
+        text = tr.get_text()
+        ip_matches = extract_ips(text)
+        if ip_matches:
+            ips.extend(ip_matches)
+    return ips
+
+def scrape_cloudflare_ips():
+    """专门爬取Cloudflare IP"""
+    cloudflare_ips = []
+    for url in CLOUDFLARE_URLS:
+        try:
+            print(f"\n正在爬取Cloudflare IP: {url}")
+            response = requests.get(url, headers=headers, timeout=10)
+            response.raise_for_status()
+            
+            soup = BeautifulSoup(response.text, 'html.parser')
+            ips = extract_ips_from_tr(soup)
+            if not ips:
+                ips = extract_ips(response.text)
+            
+            if not ips:
+                print(f"⚠️ 警告: 从 {url} 中未找到IP地址")
+            else:
+                print(f"✅ 找到 {len(ips)} 个Cloudflare IP:")
+                for ip in ips:
+                    print(f"  - {ip}")
+                cloudflare_ips.extend(ips)
+                
+        except requests.exceptions.RequestException as e:
+            print(f"❌ 错误: 爬取 {url} 失败 - {str(e)}")
+        except Exception as e:
+            print(f"❌ 错误: 处理 {url} 时发生意外错误 - {str(e)}")
+    
+    return list(set(cloudflare_ips))  # 返回去重后的IP列表
+
+def scrape_cloudfront_ips():
+    """专门爬取CloudFront IP"""
     try:
-        print(f"\n🔍 正在爬取: {url}")
-        
-        # 首次请求
-        response = requests.get(url, headers=HEADERS, timeout=15)
+        print(f"\n正在爬取CloudFront IP: {CLOUDFRONT_URL}")
+        response = requests.get(CLOUDFRONT_URL, headers=headers, timeout=10)
         response.raise_for_status()
         
-        # 等待指定时间
-        if delay_seconds > 0:
-            print(f"⏳ 等待 {delay_seconds}秒...")
-            time.sleep(delay_seconds)
-            # 二次请求获取最新数据
-            response = requests.get(url, headers=HEADERS, timeout=15)
-        
         soup = BeautifulSoup(response.text, 'html.parser')
-        
-        # 优先从表格行提取
-        ips = []
-        for tr in soup.find_all('tr'):
-            ips.extend(extract_ips(tr.get_text()))
-        
-        # 备用方案：全局搜索
+        ips = extract_ips_from_tr(soup)
         if not ips:
             ips = extract_ips(response.text)
+        
+        if not ips:
+            print(f"⚠️ 警告: 从 {CLOUDFRONT_URL} 中未找到IP地址")
+            return []
+        else:
+            print(f"✅ 找到 {len(ips)} 个CloudFront IP:")
+            for ip in ips:
+                print(f"  - {ip}")
+            return list(set(ips))  # 返回去重后的IP列表
             
-        return list(set(ips))  # 去重后返回
-    
+    except requests.exceptions.RequestException as e:
+        print(f"❌ 错误: 爬取 {CLOUDFRONT_URL} 失败 - {str(e)}")
+        return []
     except Exception as e:
-        print(f"❌ 爬取失败: {str(e)}")
+        print(f"❌ 错误: 处理 {CLOUDFRONT_URL} 时发生意外错误 - {str(e)}")
         return []
 
+def save_ips_to_file(ips, filename):
+    """将IP列表保存到文件"""
+    with open(filename, 'w') as f:
+        for ip in ips:
+            f.write(ip + '\n')
+    print(f"已保存 {len(ips)} 个IP到 {filename}")
+
+def main():
+    # 爬取并保存Cloudflare IP
+    cloudflare_ips = scrape_cloudflare_ips()
+    save_ips_to_file(cloudflare_ips, 'ip.txt')
+    
+    # 爬取并保存CloudFront IP
+    cloudfront_ips = scrape_cloudfront_ips()
+    save_ips_to_file(cloudfront_ips, 'front.txt')
+    
+    print("\n✅ 所有任务完成!")
+
 if __name__ == '__main__':
-    # 爬取主要目标
-    main_ips = []
-    for target in MAIN_TARGETS:
-        if result := scrape_site(target):
-            print(f"✅ 发现 {len(result)} 个IP:")
-            print("\n".join(f"  - {ip}" for ip in result))
-            main_ips.extend(result)
-    
-    # 爬取特殊目标
-    print(f"\n🌟 开始处理特殊目标: {SPECIAL_TARGET}")
-    front_ips = scrape_site(SPECIAL_TARGET)
-    
-    # 保存结果
-    with open('ip.txt', 'w') as f:
-        f.write("\n".join(sorted(set(main_ips))))
-    
-    with open('front.txt', 'w') as f:
-        f.write("\n".join(sorted(set(front_ips))))
-    
-    print(f"\n🎉 完成！")
-    print(f"主IP列表: {len(set(main_ips))} 个（已保存到ip.txt）")
-    print(f"CloudFront IP列表: {len(set(front_ips))} 个（已保存到front.txt）")
+    main()
