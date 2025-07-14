@@ -11,12 +11,16 @@ urls = [
 # 正则表达式用于匹配IP地址
 ip_pattern = r'\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b'
 
-# 检查ip.txt文件是否存在，如果存在则删除它
-if os.path.exists('front.txt'):
-    os.remove('front.txt')
+# 检查front.txt文件是否存在，如果不存在则创建
+if not os.path.exists('front.txt'):
+    open('front.txt', 'w').close()  # 创建空文件
 
-# 创建一个文件来存储IP地址
+# 清空文件内容（如果已有内容）
 with open('front.txt', 'w') as file:
+    pass  # 只是打开并立即关闭，清空文件
+
+# 写入IP地址到文件
+with open('front.txt', 'a') as file:  # 使用追加模式
     for url in urls:
         try:
             # 发送HTTP请求获取网页内容
