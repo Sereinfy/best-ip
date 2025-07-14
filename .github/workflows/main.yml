@@ -26,9 +26,6 @@ jobs:
     - name: Run script ip
       run: python ${{ github.workspace }}/collect_ip.py
 
-    - name: Run script
-      run: python ${{ github.workspace }}/collect_front_all.py
-        
     - name: Commit and push changes
       run: |
         git config --global user.email "tianshideyou@proton.me"
