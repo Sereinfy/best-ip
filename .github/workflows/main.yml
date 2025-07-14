@@ -28,7 +28,7 @@ jobs:
       run: python ${{ github.workspace }}/collect_ip.py
 
     - name: Run script
-      run: python ${{ github.workspace }}/collect_front.py
+      run: python ${{ github.workspace }}/collect_front_all.py
         
     - name: Commit and push changes
       run: |
