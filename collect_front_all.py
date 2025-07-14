@@ -12,11 +12,11 @@ urls = [
 ip_pattern = r'\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b'
 
 # 检查ip.txt文件是否存在，如果存在则删除它
-if os.path.exists('front_all.txt'):
-    os.remove('front_all.txt')
+if os.path.exists('front.txt'):
+    os.remove('front.txt')
 
 # 创建一个文件来存储IP地址
-with open('front_all.txt', 'w') as file:
+with open('front.txt', 'w') as file:
     for url in urls:
         try:
             # 发送HTTP请求获取网页内容
@@ -43,4 +43,4 @@ with open('front_all.txt', 'w') as file:
         except requests.exceptions.RequestException as e:
             print(f"访问 {url} 时出错: {e}")
 
-print('IP地址已保存到front_all.txt文件中。')
+print('IP地址已保存到front.txt文件中。')
