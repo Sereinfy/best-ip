@@ -2,8 +2,11 @@ import dns.message
 import dns.query
 import dns.rdatatype
 from dns.edns import ECSOption
+import os
 
-# 要解析的域名列表
+# ===== 配置部分 =====
+
+# 要解析的域名列表（写在代码里）
 domains = [
     "visa.com",
     "bestcf.top",
@@ -12,46 +15,44 @@ domains = [
 # 输出文件
 output_file = "dns_results.txt"
 
-# 指定 DNS 服务器
-dns_server = "8.8.8.8"
+# 从环境变量获取 ECS 和 DNS，默认值如下
+dns_server = os.getenv("DNS_SERVER", "8.8.8.8")
+ecs_subnet = os.getenv("ECS_SUBNET", "211.138.177.0/21")
 
-# 自定义 ECS（客户端子网），示例：
-# IPv4: "1.2.3.4/24"
-# IPv6: "2400:3200::/32"
-ecs_subnet = "211.138.177.0/21"
+# ===================
 
 
 def resolve_with_ecs(domain, qtype, server, ecs_subnet):
     ip_set = set()
     try:
-        # 构造查询报文
         query = dns.message.make_query(domain, qtype)
 
-        # 添加 ECS
+        # 解析 ECS 配置
         net, prefixlen = ecs_subnet.split("/")
         prefixlen = int(prefixlen)
         ecs = ECSOption(address=net, srclen=prefixlen, scopelen=0)
         query.use_edns(options=[ecs])
 
-        # 发送查询
-        response = dns.query.udp(query, server, timeout=3)
+        # 改为 TCP，避免 CI UDP 丢包
+        response = dns.query.tcp(query, server, timeout=5)
 
         for ans in response.answer:
             for item in ans.items:
-                if item.rdtype == dns.rdatatype.A or item.rdtype == dns.rdatatype.AAAA:
+                if item.rdtype in (dns.rdatatype.A, dns.rdatatype.AAAA):
                     ip_set.add(item.to_text())
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[ERROR] {domain} {qtype} 查询失败: {e}")
     return ip_set
 
 
-def main(domains, output_file, server, ecs_subnet):
+def main():
     all_ips = set()
+
     for domain in domains:
         for qtype in ["A", "AAAA"]:
-            all_ips |= resolve_with_ecs(domain, qtype, server, ecs_subnet)
+            all_ips |= resolve_with_ecs(domain, qtype, dns_server, ecs_subnet)
 
-    # 排序：IPv4 在前，IPv6 在后
+    # 去重 + 排序
     ipv4_list = sorted([ip for ip in all_ips if "." in ip])
     ipv6_list = sorted([ip for ip in all_ips if ":" in ip])
 
@@ -60,7 +61,8 @@ def main(domains, output_file, server, ecs_subnet):
             print(ip)
             f.write(ip + "\n")
 
+    print(f"\n✅ 解析完成，结果已保存到 {output_file}")
+
 
 if __name__ == "__main__":
-    main(domains, output_file, dns_server, ecs_subnet)
-    print(f"\n解析结果已保存到 {output_file}")
+    main()
