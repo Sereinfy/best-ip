@@ -8,7 +8,7 @@ domains = [
 
 # 指定 DNS 服务器（可改成自己需要的，比如 8.8.8.8, 1.1.1.1, 9.9.9.9）
 resolver = dns.resolver.Resolver()
-resolver.nameservers = ["8.8.8.8", "1.1.1.1"]
+resolver.nameservers = ["223.5.5.5"]
 
 output_file = "dns_best_ip.txt"
 
