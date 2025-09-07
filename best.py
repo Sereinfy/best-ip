@@ -28,7 +28,7 @@ ecs_list = [
 
 
 def resolve_with_ecs(domain, qtype, server, ecs_subnet):
-    ip_set = set()
+    ip_list = []
     try:
         query = dns.message.make_query(domain, qtype)
 
@@ -43,14 +43,14 @@ def resolve_with_ecs(domain, qtype, server, ecs_subnet):
         for ans in response.answer:
             for item in ans.items:
                 if item.rdtype in (dns.rdatatype.A, dns.rdatatype.AAAA):
-                    ip_set.add(item.to_text())
+                    ip_list.append(item.to_text())
     except Exception as e:
         print(f"[ERROR] {domain} {qtype} with ECS {ecs_subnet} 查询失败: {e}")
-    return ip_set
+    return ip_list
 
 
 def main():
-    all_ips = set()
+    all_ips = []
 
     for ecs_subnet in ecs_list:
         ecs_subnet = ecs_subnet.strip()
@@ -59,14 +59,14 @@ def main():
         print(f"\n🔍 使用 ECS {ecs_subnet} 进行解析...")
         for domain in domains:
             for qtype in ["A", "AAAA"]:
-                all_ips |= resolve_with_ecs(domain, qtype, dns_server, ecs_subnet)
+                ips = resolve_with_ecs(domain, qtype, dns_server, ecs_subnet)
+                all_ips.extend(ips)
 
-    # 去重 + 排序
-    ipv4_list = sorted([ip for ip in all_ips if "." in ip])
-    ipv6_list = sorted([ip for ip in all_ips if ":" in ip])
+    # 去重但保持顺序
+    unique_ips = list(dict.fromkeys(all_ips))
 
     with open(output_file, "w", encoding="utf-8") as f:
-        for ip in ipv4_list + ipv6_list:
+        for ip in unique_ips:
             print(ip)
             f.write(ip + "\n")
 
