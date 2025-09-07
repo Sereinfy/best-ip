@@ -13,7 +13,7 @@ domains = [
 ]
 
 # 输出文件
-output_file = "dns_results.txt"
+output_file = "dns_best_ip.txt"
 
 # 从环境变量获取 ECS 和 DNS，默认值如下
 dns_server = os.getenv("DNS_SERVER", "8.8.8.8")
