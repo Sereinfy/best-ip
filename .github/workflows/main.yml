@@ -25,8 +25,8 @@ jobs:
         pip install requests beautifulsoup4
     - name: Run scripts
       run: |
-      python ${{ github.workspace }}/collect_ip.py
-      python ${{ github.workspace }}/best.py
+        python collect_ip.py
+        python best.py
 
     - name: Commit and push changes
       run: |
