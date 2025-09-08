@@ -5,24 +5,27 @@ from dns.edns import ECSOption
 
 # ===== 配置部分 =====
 
-# 要解析的域名列表
-domains = [
-    "visa.com",
-    "bestcf.top",
+# 统一配置：域名 -> 需要使用的 ECS 列表
+# 如果要用全部 ECS，就写 ecs_list
+ecs_list = [
+    "211.138.177.0/21",
+    "61.132.163.68/24",
+    "211.91.88.129/24"
 ]
+
+domain_ecs_map = {
+    "visa.com": ecs_list, 
+    "bestcf.top": ecs_list,
+    "cnamefuckxxs.yuchen.icu": ecs_list,
+    "cfip.xxxxxxxx.tk": ["211.138.177.0/21"],
+    "cf.0sm.com": ["211.138.177.0/21"],
+}
 
 # 输出文件
 output_file = "dns_best_ip.txt"
 
 # DNS 服务器
 dns_server = "8.8.8.8"
-
-# 多个 ECS 列表，直接写在代码里
-ecs_list = [
-    "211.138.177.0/21",
-    "61.132.163.68/24",
-    "211.91.88.129/24"
-]
 
 # ===================
 
@@ -37,7 +40,6 @@ def resolve_with_ecs(domain, qtype, server, ecs_subnet):
         ecs = ECSOption(address=net, srclen=prefixlen, scopelen=0)
         query.use_edns(options=[ecs])
 
-        # 用 TCP，避免 CI UDP 丢包
         response = dns.query.tcp(query, server, timeout=5)
 
         for ans in response.answer:
@@ -52,13 +54,10 @@ def resolve_with_ecs(domain, qtype, server, ecs_subnet):
 def main():
     all_ips = []
 
-    for ecs_subnet in ecs_list:
-        ecs_subnet = ecs_subnet.strip()
-        if not ecs_subnet:
-            continue
-        print(f"\n🔍 使用 ECS {ecs_subnet} 进行解析...")
-        for domain in domains:
-            for qtype in ["A", "AAAA"]:
+    for domain, ecs_subnets in domain_ecs_map.items():
+        for ecs_subnet in ecs_subnets:
+            print(f"\n🔍 使用 ECS {ecs_subnet} 解析 {domain} ...")
+            for qtype in ["A"]:
                 ips = resolve_with_ecs(domain, qtype, dns_server, ecs_subnet)
                 all_ips.extend(ips)
 
