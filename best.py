@@ -16,6 +16,7 @@ ecs_list = [
 domain_ecs_map = {
     "visa.com": ecs_list, 
     "bestcf.top": ecs_list,
+    "canva.com": ecs_list, 
     "cnamefuckxxs.yuchen.icu": ecs_list,
     "cfip.xxxxxxxx.tk": ["211.138.177.0/21"],
     "cf.0sm.com": ["211.138.177.0/21"],
