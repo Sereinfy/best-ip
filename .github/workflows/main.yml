@@ -33,9 +33,7 @@ jobs:
         git config --global user.email "tianshideyou@proton.me"
         git config --global user.name "tianshipapa"
         if [ -n "$(git status --porcelain)" ]; then
-          git add ip.txt
-          git add front.txt
-          git add dns_best_ip.txt
+          git add *.txt
           git commit -m "Automatic update"
           git push
         else
